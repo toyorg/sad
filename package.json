@@ -1,0 +1,30 @@
+{
+  "name": "stalker_archive_downloader",
+  "version": "v0.1",
+  "description": "An API to download videos from Stalker/Ministra Middleware",
+  "main": "api.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/toyorg/stalker_archive_downloader.git"
+  },
+  "author": "toyorg",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/toyorg/stalker_archive_downloader/issues"
+  },
+  "homepage": "https://github.com/toyorg/stalker_archive_downloader#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "fs": "0.0.1-security",
+    "inquirer": "^5.2.0",
+    "lodash": "^4.17.10",
+    "moment": "^2.22.1",
+    "readline": "^1.3.0",
+    "request": "^2.85.0",
+    "request-progress": "^3.0.0",
+    "single-line-log": "^1.1.2"
+  }
+}

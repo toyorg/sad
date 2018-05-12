@@ -7,6 +7,7 @@ const request = require('request');
 const progress = require('request-progress');
 const log = require('single-line-log').stdout;
 
+const minustwodays = moment().subtract(2, 'd').format('YYYY-MM-DD');
 const yesterday = moment().subtract(1, 'd').format('YYYY-MM-DD');
 const today = moment().format('YYYY-MM-DD');
 var progs = []
@@ -187,29 +188,36 @@ get_mac().then(mac => {
                     pageSize: 15
                 }])
                 .then(channel => {
-                    get_channel_epg(channel.id, yesterday, 1, token, mac).then(data => {
+                    get_channel_epg(channel.id, minustwodays, 1, token, mac).then(data => {
                         var int;
                         for (int = 2; int <= Math.ceil(data); int++) {
-                            get_channel_epg(channel.id, yesterday, int, token, mac);
+                            get_channel_epg(channel.id, minustwodays, int, token, mac);
                         }
                     }).then(() => {
-                        get_channel_epg(channel.id, today, 1, token, mac).then(data => {
+                        get_channel_epg(channel.id, yesterday, 1, token, mac).then(data => {
                             var int;
                             for (int = 2; int <= Math.ceil(data); int++) {
-                                get_channel_epg(channel.id, today, int, token, mac);
+                                get_channel_epg(channel.id, yesterday, int, token, mac);
                             }
-                        }).then(prog => {
-                            progs.push(new inquirer.Separator());
-                            inquirer
-                                .prompt([{
-                                    type: 'list',
-                                    message: 'Select TV show',
-                                    name: 'id',
-                                    choices: progs,
-                                    pageSize: 15
-                                }]).then(prog => {
-                                    get_download_link(prog.id, token, mac);
-                                });
+                        }).then(() => {
+                            get_channel_epg(channel.id, today, 1, token, mac).then(data => {
+                                var int;
+                                for (int = 2; int <= Math.ceil(data); int++) {
+                                    get_channel_epg(channel.id, today, int, token, mac);
+                                }
+                            }).then(prog => {
+                                progs.push(new inquirer.Separator());
+                                inquirer
+                                    .prompt([{
+                                        type: 'list',
+                                        message: 'Select TV show',
+                                        name: 'id',
+                                        choices: progs,
+                                        pageSize: 15
+                                    }]).then(prog => {
+                                        get_download_link(prog.id, token, mac);
+                                    });
+                            });
                         });
                     });
                 });

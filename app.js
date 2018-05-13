@@ -9,8 +9,6 @@ const log = require('single-line-log').stdout;
 const Fuse = require('fuse.js');
 const { exec } = require('child_process');
 const truncate = require('truncate');
-const updateNotifier = require('update-notifier');
-const pkg = require('./package.json');
 
 inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
@@ -273,7 +271,6 @@ get_mac().then(mac => {
                                         pageSize: 15
                                     }]).then(prog => {
                                         get_download_link(prog.id, token, mac);
-                                        updateNotifier({pkg}).notify();
                                     });
                             });
                         });

@@ -2,7 +2,13 @@
 ## Requirements
 - [Node.js](https://nodejs.org/en/)
 - [VLC](https://www.videolan.org/vlc/index.html) to play videos
-## Usage
+## Installation
+### NPM
+```
+# Installing by NPM
+npm i -g stalker_archive_downloader
+```
+### GitHub
 ```console
 # Clone or download zip
 git clone https://github.com/toyorg/stalker_archive_downloader.git
@@ -14,6 +20,8 @@ npm i
 node app.js
 ```
 ## Changelog
+### v0.0.52
+- Update notifier
 ### v0.0.51
 - Renamed var to let,
 - Truncating TV show name.

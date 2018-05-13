@@ -14,6 +14,9 @@ npm i
 node app.js
 ```
 ## Changelog
+### v0.0.6
+- GitHub update notify,
+- Chalk for colored output.
 ### v0.0.55
 - Replace fs for reading mac.txt to [lowdb](https://github.com/typicode/lowdb),
 - lowdb is storing MAC and portal URL addresses.
@@ -33,5 +36,4 @@ node app.js
 ### v0.0.1
 - First working version.
 ## TODO
-- Get channels dynamically for portal (multiple portals support),
-- [GitHub releases](https://api.github.com/repos/toyorg/stalker_archive_downloader/releases) based update notify.
+- Get channels dynamically for portal (multiple portals support).

@@ -1,6 +1,6 @@
 {
   "name": "stalker_archive_downloader",
-  "version": "v0.0.55",
+  "version": "v0.0.6",
   "description": "An app to download videos from Stalker/Ministra Middleware",
   "main": "app.js",
   "scripts": {
@@ -18,8 +18,9 @@
   "homepage": "https://github.com/toyorg/stalker_archive_downloader#readme",
   "dependencies": {
     "axios": "^0.18.0",
+    "chalk": "^2.4.1",
     "dayjs": "^1.5.24",
-    "fs": "0.0.1-security", 
+    "fs": "0.0.1-security",
     "fuse.js": "^3.2.0",
     "inquirer": "^5.2.0",
     "inquirer-autocomplete-prompt": "^0.12.2",

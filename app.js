@@ -11,9 +11,12 @@ const { exec } = require('child_process');
 const truncate = require('truncate');
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
+const chalk = require('chalk');
+const error = chalk.bold.red;
 
 const adapter = new FileSync('settings.json')
 const db = low(adapter)
+const package = require('./package.json');
 
 db.defaults({
     settings: []
@@ -51,8 +54,8 @@ const get_channel_epg = async (channel_id, date, page, token, mac, url) => {
             })
         }
         return response.data['js']['total_items']
-    } catch (error) {
-        console.log(error);
+    } catch (e) {
+        console.log(error(e));
     }
 };
 
@@ -87,11 +90,11 @@ const get_download_link = async (prog_id, token, mac, url) => {
                             log('Progress: ' + (state.size.transferred / 1000000).toFixed(2) + ' MB/' + (state.size.total / 1000000).toFixed(2) + ' MB | ' + (state.percent * 100).toFixed(2) + ' % | ' + (state.speed * 0.000001).toFixed(2) + ' MB/s | ETA ' + state.time.remaining + ' s');
                         })
                         .on('error', function (err) {
-                            console.log('\nSomething went wrong!\n' + err);
+                            console.log(error('\nSomething went wrong!\n') + err);
                             fs.unlink(data['js']['to_file']);
                         })
                         .on('end', function () {
-                            console.log('\nFinished!');
+                            console.log(chalk.green('\nFinished!'));
                         })
                         .pipe(fs.createWriteStream(data['js']['to_file']));
                 } else if (answer.what == 'Watch in VLC') {
@@ -99,13 +102,13 @@ const get_download_link = async (prog_id, token, mac, url) => {
                 } else if (answer.what == 'Link only') {
                     console.log('\n' + data['js']['download_cmd'] + '\n');
                 } else {
-                    console.log('Something went wrong!')
+                    console.log(error('Something went wrong!'));
                     process.exit();
                 }
             });
-    } catch (error) {
-        console.log(error);
-    }
+        } catch (e) {
+            console.log(error(e));
+        }
 };
 
 
@@ -121,13 +124,13 @@ const get_token = async (mac, url) => {
         });
         const data = response.data;
         if (data['js']['token'] == undefined) {
-            console.log('Try again!');
+            console.log(error('Try again!'));
             // exec('node app.js');
             process.exit();
         }
         return data['js']['token']
-    } catch (error) {
-        console.log(error);
+    } catch (e) {
+        console.log(error(e));
     }
 };
 
@@ -144,8 +147,8 @@ const get_profile = async (token, timestamp, mac, url) => {
             }
         });
         const data = response.data;
-    } catch (error) {
-        console.log(error);
+    } catch (e) {
+        console.log(error(e));
     }
 };
 
@@ -172,8 +175,8 @@ const get_channels = async (token, page, mac, url) => {
             }
         }
         fs.appendFileSync('channels.txt', 'new inquirer.Separator()]', 'utf8');
-    } catch (error) {
-        console.log(error);
+    } catch (e) {
+        console.log(error(e));
     }
 };
 
@@ -267,63 +270,73 @@ function channels_search(answers, input) {
 }
 
 
+const update_check = async () => {
+    const response = await axios.get('https://api.github.com/repos/toyorg/stalker_archive_downloader/releases');
+    data = response.data;
+    data = data[0]
+    return data;
+}
+
+
 // for (i = 0; i < 99; i++) {
 //     get_channels(token, i, mac);
 // }
 
-
-get_url().then(url => {
-    get_mac().then(mac => {
-        get_token(mac, url).then(data => {
-            let token = data;
-            get_profile(token, dayjs().unix(), mac, url).then(() => {
-                inquirer
-                    .prompt([{
-                        type: 'autocomplete',
-                        message: 'Search for TV channel',
-                        name: 'id',
-                        source: channels_search,
-                        pageSize: 15,
-                        validate: function (val) {
-                            return val ?
-                                true :
-                                'Type something!';
-                        }
-                    }])
-                    .then(channel => {
-                        get_channel_epg(channel.id, twodays, 1, token, mac, url).then(data => {
-                            let int;
-                            for (int = 2; int <= Math.ceil(data); int++) {
-                                get_channel_epg(channel.id, twodays, int, token, mac, url);
+update_check().then(git => {
+    if (package.version < git.tag_name) console.log('\n' + chalk.green.bold('There are newer version available!') + chalk.yellow('\n' + git.html_url) + '\n');
+    get_url().then(url => {
+        get_mac().then(mac => {
+            get_token(mac, url).then(data => {
+                let token = data;
+                get_profile(token, dayjs().unix(), mac, url).then(() => {
+                    inquirer
+                        .prompt([{
+                            type: 'autocomplete',
+                            message: 'Search for TV channel',
+                            name: 'id',
+                            source: channels_search,
+                            pageSize: 15,
+                            validate: function (val) {
+                                return val ?
+                                    true :
+                                    'Type something!';
                             }
-                        }).then(() => {
-                            get_channel_epg(channel.id, oneday, 1, token, mac, url).then(data => {
+                        }])
+                        .then(channel => {
+                            get_channel_epg(channel.id, twodays, 1, token, mac, url).then(data => {
                                 let int;
                                 for (int = 2; int <= Math.ceil(data); int++) {
-                                    get_channel_epg(channel.id, oneday, int, token, mac, url);
+                                    get_channel_epg(channel.id, twodays, int, token, mac, url);
                                 }
                             }).then(() => {
-                                get_channel_epg(channel.id, today, 1, token, mac, url).then(data => {
+                                get_channel_epg(channel.id, oneday, 1, token, mac, url).then(data => {
                                     let int;
                                     for (int = 2; int <= Math.ceil(data); int++) {
-                                        get_channel_epg(channel.id, today, int, token, mac, url);
+                                        get_channel_epg(channel.id, oneday, int, token, mac, url);
                                     }
-                                }).then(prog => {
-                                    progs.push(new inquirer.Separator());
-                                    inquirer
-                                        .prompt([{
-                                            type: 'list',
-                                            message: 'Select TV show',
-                                            name: 'id',
-                                            choices: progs,
-                                            pageSize: 15
-                                        }]).then(prog => {
-                                            get_download_link(prog.id, token, mac, url);
-                                        });
+                                }).then(() => {
+                                    get_channel_epg(channel.id, today, 1, token, mac, url).then(data => {
+                                        let int;
+                                        for (int = 2; int <= Math.ceil(data); int++) {
+                                            get_channel_epg(channel.id, today, int, token, mac, url);
+                                        }
+                                    }).then(prog => {
+                                        progs.push(new inquirer.Separator());
+                                        inquirer
+                                            .prompt([{
+                                                type: 'list',
+                                                message: 'Select TV show',
+                                                name: 'id',
+                                                choices: progs,
+                                                pageSize: 15
+                                            }]).then(prog => {
+                                                get_download_link(prog.id, token, mac, url);
+                                            });
+                                    });
                                 });
                             });
                         });
-                    });
+                });
             });
         });
     });

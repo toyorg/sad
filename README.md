@@ -14,6 +14,9 @@ npm i
 node app.js
 ```
 ## Changelog
+### v0.0.51
+- Renamed var to let,
+- Truncating TV show name.
 ### v0.0.5
 - Replaced [Moment.js](https://momentjs.com/) with [Day.js](https://github.com/xx45/dayjs),
 - Ability to search for TV channel instead of just looking for it,

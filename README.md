@@ -10,10 +10,14 @@ git clone https://github.com/toyorg/stalker_archive_downloader.git
 cd stalker_archive_downloader
 # Install dependencies
 npm i
-# Run app
+# First run to get channels
+node app.js -c
+# Then you can run app normally
 node app.js
 ```
 ## Changelog
+### v1.0.0
+- Get channels dynamically for portal (multiple portals support).
 ### v0.0.6
 - GitHub update notify,
 - Chalk for colored output.
@@ -36,4 +40,3 @@ node app.js
 ### v0.0.1
 - First working version.
 ## TODO
-- Get channels dynamically for portal (multiple portals support).

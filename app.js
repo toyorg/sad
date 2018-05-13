@@ -9,6 +9,15 @@ const log = require('single-line-log').stdout;
 const Fuse = require('fuse.js');
 const { exec } = require('child_process');
 const truncate = require('truncate');
+const low = require('lowdb')
+const FileSync = require('lowdb/adapters/FileSync')
+
+const adapter = new FileSync('settings.json')
+const db = low(adapter)
+
+db.defaults({
+    settings: []
+}).write()
 
 inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
@@ -20,11 +29,11 @@ let channels = [{"value":"2","name":"Интер"},{"value":"33","name":"СТБ"}
 channels = _.uniqWith(channels, _.isEqual);
 channels = _.orderBy(channels, ['name'], ['asc']);
 
-const get_channel_epg = async (channel_id, date, page, token, mac) => {
+const get_channel_epg = async (channel_id, date, page, token, mac, url) => {
     try {
-        const response = await axios.get('http://play.rezt.us/stalker_portal/server/load.php?type=epg&action=get_simple_data_table&ch_id=' + channel_id + '&date=' + date + '&p=' + page, {
+        const response = await axios.get(url + 'stalker_portal/server/load.php?type=epg&action=get_simple_data_table&ch_id=' + channel_id + '&date=' + date + '&p=' + page, {
             headers: {
-                'Referer': 'http://play.rezt.us/stalker_portal/c/index.html?referrer=file:///home/web/services.htm',
+                'Referer': url + 'stalker_portal/c/index.html?referrer=file:///home/web/services.htm',
                 'Authorization': 'Bearer ' + token,
                 'X-User-Agent': 'Model: MAG250; Link:',
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0',
@@ -36,7 +45,9 @@ const get_channel_epg = async (channel_id, date, page, token, mac) => {
         for (int = 0; int < _.size(data); int++) {
             progs.push({
                 value: data[int]['id'],
-                name: truncate(data[int]['name'], 74, {ellipsis:'...'})
+                name: truncate(data[int]['name'], 74, {
+                    ellipsis: '...'
+                })
             })
         }
         return response.data['js']['total_items']
@@ -46,11 +57,11 @@ const get_channel_epg = async (channel_id, date, page, token, mac) => {
 };
 
 
-const get_download_link = async (prog_id, token, mac) => {
+const get_download_link = async (prog_id, token, mac, url) => {
     try {
-        const response = await axios.get('http://play.rezt.us/stalker_portal/server/load.php?type=tv_archive&action=create_link&cmd=auto%20/media/' + prog_id + '.mpg&series=&forced_storage=&disable_ad=1&download=1&force_ch_link_check=0&JsHttpRequest=1-xml', {
+        const response = await axios.get(url + 'stalker_portal/server/load.php?type=tv_archive&action=create_link&cmd=auto%20/media/' + prog_id + '.mpg&series=&forced_storage=&disable_ad=1&download=1&force_ch_link_check=0&JsHttpRequest=1-xml', {
             headers: {
-                'Referer': 'http://play.rezt.us/stalker_portal/c/index.html?referrer=file:///home/web/services.htm',
+                'Referer': url + 'stalker_portal/c/index.html?referrer=file:///home/web/services.htm',
                 'Authorization': 'Bearer ' + token,
                 'X-User-Agent': 'Model: MAG250; Link:',
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0',
@@ -84,7 +95,7 @@ const get_download_link = async (prog_id, token, mac) => {
                         })
                         .pipe(fs.createWriteStream(data['js']['to_file']));
                 } else if (answer.what == 'Watch in VLC') {
-                    exec('vlc ' + data['js']['download_cmd']); 
+                    exec('vlc ' + data['js']['download_cmd']);
                 } else if (answer.what == 'Link only') {
                     console.log('\n' + data['js']['download_cmd'] + '\n');
                 } else {
@@ -98,11 +109,11 @@ const get_download_link = async (prog_id, token, mac) => {
 };
 
 
-const get_token = async (mac) => {
+const get_token = async (mac, url) => {
     try {
-        const response = await axios.get('http://play.rezt.us/stalker_portal/server/load.php?type=stb&action=handshake', {
+        const response = await axios.get(url + 'stalker_portal/server/load.php?type=stb&action=handshake', {
             headers: {
-                'Referer': 'http://play.rezt.us/stalker_portal/c/index.html?referrer=file:///home/web/services.htm',
+                'Referer': url + 'stalker_portal/c/index.html?referrer=file:///home/web/services.htm',
                 'X-User-Agent': 'Model: MAG250; Link:',
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0',
                 'Cookie': 'mac=' + mac + '; stb_lang=en; timezone=Europe/Warsaw; adid=0'
@@ -121,11 +132,11 @@ const get_token = async (mac) => {
 };
 
 
-const get_profile = async (token, timestamp, mac) => {
+const get_profile = async (token, timestamp, mac, url) => {
     try {
-        const response = await axios.get('http://play.rezt.us/stalker_portal/server/load.php?type=stb&action=get_profile&hd=1&ver=ImageDescription:%200.2.16-r2;%20ImageDate:%20Fri%20Oct%2025%2017:28:41%20EEST%202013;%20PORTAL%20version:%205.2.0;%20API%20Version:%20JS%20API%20version:%20328;%20STB%20API%20version:%20134;%20Player%20Engine%20version:%200x566&num_banks=1&sn=012012N01212&stb_type=MAG250&client_type=STB&image_version=216&video_out=hdmi&device_id=&device_id2=&signature=&auth_second_step=0&hw_version=1.7-BD-00&not_valid_token=0&metrics=%7B%22mac%22%3A%22' + mac + '%22%2C%22sn%22%3A%22012012N01212%22%2C%22model%22%3A%22MAG250%22%2C%22type%22%3A%22STB%22%2C%22uid%22%3A%22%22%2C%22random%22%3A%22f458cd96fc4c77caedd7b9d802e716ffa28fec0b%22%7D&hw_version_2=ocI73t2lwJLCCVxfzDarD1CfuPY=&timestamp=' + timestamp + '&api_signature=215&prehash=eGDESVA/0yhol/dGCQOABJBd54U=&JsHttpRequest=1-xml', {
+        const response = await axios.get(url + 'stalker_portal/server/load.php?type=stb&action=get_profile&hd=1&ver=ImageDescription:%200.2.16-r2;%20ImageDate:%20Fri%20Oct%2025%2017:28:41%20EEST%202013;%20PORTAL%20version:%205.2.0;%20API%20Version:%20JS%20API%20version:%20328;%20STB%20API%20version:%20134;%20Player%20Engine%20version:%200x566&num_banks=1&sn=012012N01212&stb_type=MAG250&client_type=STB&image_version=216&video_out=hdmi&device_id=&device_id2=&signature=&auth_second_step=0&hw_version=1.7-BD-00&not_valid_token=0&metrics=%7B%22mac%22%3A%22' + mac + '%22%2C%22sn%22%3A%22012012N01212%22%2C%22model%22%3A%22MAG250%22%2C%22type%22%3A%22STB%22%2C%22uid%22%3A%22%22%2C%22random%22%3A%22f458cd96fc4c77caedd7b9d802e716ffa28fec0b%22%7D&hw_version_2=ocI73t2lwJLCCVxfzDarD1CfuPY=&timestamp=' + timestamp + '&api_signature=215&prehash=eGDESVA/0yhol/dGCQOABJBd54U=&JsHttpRequest=1-xml', {
             headers: {
-                'Referer': 'http://play.rezt.us/stalker_portal/c/index.html?referrer=file:///home/web/services.htm',
+                'Referer': url + 'stalker_portal/c/index.html?referrer=file:///home/web/services.htm',
                 'Authorization': 'Bearer ' + token,
                 'X-User-Agent': 'Model: MAG250; Link:',
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0',
@@ -139,11 +150,11 @@ const get_profile = async (token, timestamp, mac) => {
 };
 
 
-const get_channels = async (token, page, mac) => {
+const get_channels = async (token, page, mac, url) => {
     try {
-        const response = await axios.get('http://play.rezt.us/stalker_portal/server/load.php?type=itv&action=get_ordered_list&genre=*&force_ch_link_check=&fav=0&sortby=number&hd=0&p=' + page + '&JsHttpRequest=1-xml', {
+        const response = await axios.get(url + 'stalker_portal/server/load.php?type=itv&action=get_ordered_list&genre=*&force_ch_link_check=&fav=0&sortby=number&hd=0&p=' + page + '&JsHttpRequest=1-xml', {
             headers: {
-                'Referer': 'http://play.rezt.us/stalker_portal/c/index.html?referrer=file:///home/web/services.htm',
+                'Referer': url + 'stalker_portal/c/index.html?referrer=file:///home/web/services.htm',
                 'Authorization': 'Bearer ' + token,
                 'X-User-Agent': 'Model: MAG250; Link:',
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0',
@@ -170,10 +181,10 @@ const get_channels = async (token, page, mac) => {
 async function get_mac() {
     return new Promise(function (resolve, reject) {
         try {
-            const mac = fs.readFileSync('mac.txt');
+            const mac = db.get('settings').find('mac').value().mac;
             resolve(mac)
         } catch (err) {
-            if (err.code === 'ENOENT') {
+            if (err.code === undefined) {
                 inquirer.prompt([{
                     type: 'input',
                     message: 'Type in your MAC address',
@@ -186,8 +197,45 @@ async function get_mac() {
                         return 'Please enter a valid MAC address!';
                     }
                 }]).then(answer => {
-                    fs.appendFileSync('mac.txt', answer.mac, 'utf8');
+                    db.get('settings')
+                        .push({
+                            mac: answer.mac
+                        })
+                        .write()
                     resolve(answer.mac)
+                });
+            } else {
+                throw err;
+            }
+        }
+    })
+}
+
+async function get_url() {
+    return new Promise(function (resolve, reject) {
+        try {
+            const url = db.get('settings').find('url').value().url;
+            resolve(url)
+        } catch (err) {
+            if (err.code === undefined) {
+                inquirer.prompt([{
+                    type: 'input',
+                    message: 'Type in your portal URL address',
+                    name: 'url',
+                    validate: function (value) {
+                        let pass = value.match(/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi);
+                        if (pass) {
+                            return true;
+                        }
+                        return 'Please enter a valid portal URL address!\nAddress must look like this: http://example.com/';
+                    }
+                }]).then(answer => {
+                    db.get('settings')
+                        .push({
+                            url: answer.url
+                        })
+                        .write()
+                    resolve(answer.url)
                 });
             } else {
                 throw err;
@@ -224,58 +272,59 @@ function channels_search(answers, input) {
 // }
 
 
-get_mac().then(mac => {
-    mac = mac.toString('utf8');
-    get_token(mac).then(data => {
-        let token = data;
-        get_profile(token, dayjs().unix(), mac).then(() => {
-            inquirer
-                .prompt([{
-                    type: 'autocomplete',
-                    message: 'Search for TV channel',
-                    name: 'id',
-                    source: channels_search,
-                    pageSize: 15,
-                    validate: function (val) {
-                        return val ?
-                            true :
-                            'Type something!';
-                    }
-                }])
-                .then(channel => {
-                    get_channel_epg(channel.id, twodays, 1, token, mac).then(data => {
-                        let int;
-                        for (int = 2; int <= Math.ceil(data); int++) {
-                            get_channel_epg(channel.id, twodays, int, token, mac);
+get_url().then(url => {
+    get_mac().then(mac => {
+        get_token(mac, url).then(data => {
+            let token = data;
+            get_profile(token, dayjs().unix(), mac, url).then(() => {
+                inquirer
+                    .prompt([{
+                        type: 'autocomplete',
+                        message: 'Search for TV channel',
+                        name: 'id',
+                        source: channels_search,
+                        pageSize: 15,
+                        validate: function (val) {
+                            return val ?
+                                true :
+                                'Type something!';
                         }
-                    }).then(() => {
-                        get_channel_epg(channel.id, oneday, 1, token, mac).then(data => {
+                    }])
+                    .then(channel => {
+                        get_channel_epg(channel.id, twodays, 1, token, mac, url).then(data => {
                             let int;
                             for (int = 2; int <= Math.ceil(data); int++) {
-                                get_channel_epg(channel.id, oneday, int, token, mac);
+                                get_channel_epg(channel.id, twodays, int, token, mac, url);
                             }
                         }).then(() => {
-                            get_channel_epg(channel.id, today, 1, token, mac).then(data => {
+                            get_channel_epg(channel.id, oneday, 1, token, mac, url).then(data => {
                                 let int;
                                 for (int = 2; int <= Math.ceil(data); int++) {
-                                    get_channel_epg(channel.id, today, int, token, mac);
+                                    get_channel_epg(channel.id, oneday, int, token, mac, url);
                                 }
-                            }).then(prog => {
-                                progs.push(new inquirer.Separator());
-                                inquirer
-                                    .prompt([{
-                                        type: 'list',
-                                        message: 'Select TV show',
-                                        name: 'id',
-                                        choices: progs,
-                                        pageSize: 15
-                                    }]).then(prog => {
-                                        get_download_link(prog.id, token, mac);
-                                    });
+                            }).then(() => {
+                                get_channel_epg(channel.id, today, 1, token, mac, url).then(data => {
+                                    let int;
+                                    for (int = 2; int <= Math.ceil(data); int++) {
+                                        get_channel_epg(channel.id, today, int, token, mac, url);
+                                    }
+                                }).then(prog => {
+                                    progs.push(new inquirer.Separator());
+                                    inquirer
+                                        .prompt([{
+                                            type: 'list',
+                                            message: 'Select TV show',
+                                            name: 'id',
+                                            choices: progs,
+                                            pageSize: 15
+                                        }]).then(prog => {
+                                            get_download_link(prog.id, token, mac, url);
+                                        });
+                                });
                             });
                         });
                     });
-                });
+            });
         });
     });
 });

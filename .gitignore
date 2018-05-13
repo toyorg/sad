@@ -59,8 +59,6 @@ typings/
 
 \.vscode/
 
-mac\.txt
-
-
-
 package-lock\.json
+
+settings\.json

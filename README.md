@@ -1,7 +1,7 @@
 # An app to download videos from Stalker/Ministra Middleware
 ## Requirements
-- [Node.js](https://nodejs.org/en/)
-- [VLC](https://www.videolan.org/vlc/index.html) to play videos
+- [Node.js](https://nodejs.org/en/),
+- [VLC](https://www.videolan.org/vlc/index.html) to play videos.
 ## Usage
 ```console
 # Clone or download zip
@@ -14,6 +14,9 @@ npm i
 node app.js
 ```
 ## Changelog
+### v0.0.55
+- Replace fs for reading mac.txt to [lowdb](https://github.com/typicode/lowdb),
+- lowdb is storing MAC and portal URL addresses.
 ### v0.0.51
 - Renamed var to let,
 - Truncating TV show name.
@@ -29,3 +32,6 @@ node app.js
 - Some fixing and cleaning.
 ### v0.0.1
 - First working version.
+## TODO
+- Get channels dynamically for portal (multiple portals support),
+- [GitHub releases](https://api.github.com/repos/toyorg/stalker_archive_downloader/releases) based update notify.

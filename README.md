@@ -17,7 +17,7 @@ node app.js
 ```
 ## Changelog
 ### v1.0.0
-- Get channels dynamically for portal (multiple portals support).
+- Get channels dynamically from portal (multiple portals support).
 ### v0.0.6
 - GitHub update notify,
 - Chalk for colored output.

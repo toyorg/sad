@@ -63,6 +63,8 @@ package-lock\.json
 
 settings\.json
 
-\.jsbeautifyrc
-
 channels\.json
+
+\.eslintrc
+
+\.prettierrc

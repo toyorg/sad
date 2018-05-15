@@ -1,6 +1,6 @@
 {
   "name": "stalker_archive_downloader",
-  "version": "v1.0.0",
+  "version": "v1.0.2",
   "description": "An app to download videos from Stalker/Ministra Middleware",
   "main": "app.js",
   "scripts": {

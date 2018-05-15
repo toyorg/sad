@@ -7,26 +7,19 @@ const request = require('request');
 const progress = require('request-progress');
 const log = require('single-line-log').stdout;
 const Fuse = require('fuse.js');
-const { exec } = require('child_process');
+const exec = require('child_process').exec;
 const truncate = require('truncate');
 const low = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
 const chalk = require('chalk');
 
 const error = chalk.bold.red;
+const success = chalk.bold.green;
 const adapterSettings = new FileSync('settings.json');
 const dbSettings = low(adapterSettings);
 const adapterChannels = new FileSync('channels.json');
 const dbChannels = low(adapterChannels);
 const packageJson = require('./package.json');
-
-dbSettings.defaults({
-  settings: [],
-}).write();
-
-dbChannels.defaults({
-  channels: [],
-}).write();
 
 inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
@@ -103,6 +96,7 @@ const getLink = async (progId, token, mac, url) => {
             .pipe(fs.createWriteStream(data.js.to_file));
         } else if (answer.what === 'Watch in VLC') {
           exec(`vlc ${data.js.download_cmd}`);
+          process.exit();
         } else if (answer.what === 'Link only') {
           console.log(`\n${data.js.download_cmd}\n`);
         } else {
@@ -128,7 +122,7 @@ const getToken = async (mac, url) => {
     });
     const data = response.data;
     if (data.js.token === undefined) {
-      console.log(error('Try again!'));
+      console.log(error('\nTry again!\n'));
       // exec('node app.js');
       process.exit();
     }
@@ -173,7 +167,7 @@ const getChannels = async (token, page, mac, url) => {
     let data = response.data;
     data = _.filter(data.js.data, ['enable_tv_archive', 1]);
     for (let int = 0; int < _.size(data); int += 1) {
-      if (data[int].name === undefined) {
+      if (!data[int].name) {
         dbChannels.get('channels')
           .push({
             value: data[int].id,
@@ -235,6 +229,9 @@ async function getUrl() {
       const url = dbSettings.get('settings').find('url').value().url;
       resolve(url);
     } catch (err) {
+      dbSettings.defaults({
+        settings: [],
+      }).write();
       if (err.code === undefined) {
         inquirer.prompt([{
           type: 'input',
@@ -296,7 +293,9 @@ const updateChecker = async () => {
 };
 
 
-if (process.argv.length > 1 && process.argv[2] === '-c') {
+if (dbChannels.get('channels').size().value() === 0 || (process.argv.length > 1 && process.argv[2] === '-c')) {
+  console.log(`\n${success('Channels will be updated. Re-run your app soon.')}\n`);
+  dbChannels.setState({ channels: [] });
   getUrl().then((url) => {
     getMac().then((mac) => {
       getToken(mac, url).then((data) => {
@@ -311,7 +310,7 @@ if (process.argv.length > 1 && process.argv[2] === '-c') {
   });
 } else {
   updateChecker().then((git) => {
-    if (packageJson.version < git.tag_name) console.log(`\n${chalk.green.bold('There are newer version available!')}${chalk.yellow(`\n${git.html_url}`)}\n`);
+    if (packageJson.version < git.tag_name) console.log(`\n${success('There are newer version available!')}${chalk.yellow(`\n${git.html_url}`)}\n`);
     getUrl().then((url) => {
       getMac().then((mac) => {
         getToken(mac, url).then((data) => {

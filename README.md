@@ -22,6 +22,11 @@ node app.js
 
 ## Changelog
 
+### v1.0.2
+
+* If channels.json is empty download available channels from portal,
+* Fixed downloading channels.
+
 ### v1.0.1
 
 * Code cleanup using [Prettier](https://github.com/prettier/prettier), [ESLint](https://github.com/eslint/eslint) and [Babel](https://github.com/babel/babel).
@@ -30,17 +35,17 @@ node app.js
 
 * Get channels dynamically from portal (multiple portals support).
 
-### v0.0.6
+### v0.1.1
 
 * GitHub update notify,
 * Chalk for colored output.
 
-### v0.0.55
+### v0.1.0
 
 * Replace fs for reading mac.txt to [lowdb](https://github.com/typicode/lowdb),
 * lowdb is storing MAC and portal URL addresses.
 
-### v0.0.51
+### v0.0.6
 
 * Renamed var to let,
 * Truncating TV show name.

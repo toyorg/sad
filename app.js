@@ -11,10 +11,8 @@ const exec = require('child_process').exec;
 const truncate = require('truncate');
 const low = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
-const chalk = require('chalk');
+const signale = require('signale');
 
-const error = chalk.bold.red;
-const success = chalk.bold.green;
 const adapterSettings = new FileSync('settings.json');
 const dbSettings = low(adapterSettings);
 const adapterChannels = new FileSync('channels.json');
@@ -51,7 +49,7 @@ const getProgs = async (channelId, date, page, token, mac, url) => {
     }
     return response.data.js.total_items;
   } catch (e) {
-    console.log(error(e));
+    signale.fatal(new Error('Something went wrong!'));
   }
   return 0;
 };
@@ -86,26 +84,27 @@ const getLink = async (progId, token, mac, url) => {
             .on('progress', (state) => {
               log(`Progress: ${(state.size.transferred / 1000000).toFixed(2)} MB/${(state.size.total / 1000000).toFixed(2)} MB | ${(state.percent * 100).toFixed(2)} % | ${(state.speed * 0.000001).toFixed(2)} MB/s | ETA ${state.time.remaining} s`);
             })
-            .on('error', (err) => {
-              console.log(error('\nSomething went wrong!\n') + err);
+            .on('error', () => {
+              signale.fatal(new Error('Something went wrong while downloading!'));
               fs.unlink(data.js.to_file);
             })
             .on('end', () => {
-              console.log(chalk.green('\nFinished!'));
+              process.stdout.write('\n');
+              signale.success('Finished!');
             })
             .pipe(fs.createWriteStream(data.js.to_file));
         } else if (answer.what === 'Watch in VLC') {
           exec(`vlc ${data.js.download_cmd}`);
           process.exit();
         } else if (answer.what === 'Link only') {
-          console.log(`\n${data.js.download_cmd}\n`);
+          signale.note(`${data.js.download_cmd}`);
         } else {
-          console.log(error('Something went wrong!'));
+          signale.fatal(new Error('Something went wrong!'));
           process.exit();
         }
       });
   } catch (e) {
-    console.log(error(e));
+    signale.fatal(new Error('Something went wrong!'));
   }
 };
 
@@ -122,13 +121,12 @@ const getToken = async (mac, url) => {
     });
     const data = response.data;
     if (data.js.token === undefined) {
-      console.log(error('\nTry again!\n'));
-      // exec('node app.js');
+      signale.fatal('Try again!');
       process.exit();
     }
     return data.js.token;
   } catch (e) {
-    console.log(error(e));
+    signale.fatal(new Error('Something went wrong!'));
   }
   return 0;
 };
@@ -147,7 +145,7 @@ const getProfile = async (token, timestamp, mac, url) => {
     });
     return response;
   } catch (e) {
-    console.log(error(e));
+    signale.fatal(new Error('Something went wrong!'));
   }
   return 0;
 };
@@ -184,7 +182,7 @@ const getChannels = async (token, page, mac, url) => {
       }
     }
   } catch (e) {
-    console.log(error(e));
+    signale.fatal(new Error('Something went wrong!'));
   }
 };
 
@@ -294,7 +292,7 @@ const updateChecker = async () => {
 
 
 if (dbChannels.get('channels').size().value() === 0 || (process.argv.length > 1 && process.argv[2] === '-c')) {
-  console.log(`\n${success('Channels will be updated. Re-run your app soon.')}\n`);
+  signale.pending('Channels will be updated in one moment.\n');
   dbChannels.setState({ channels: [] });
   getUrl().then((url) => {
     getMac().then((mac) => {
@@ -310,7 +308,7 @@ if (dbChannels.get('channels').size().value() === 0 || (process.argv.length > 1 
   });
 } else {
   updateChecker().then((git) => {
-    if (packageJson.version < git.tag_name) console.log(`\n${success('There are newer version available!')}${chalk.yellow(`\n${git.html_url}`)}\n`);
+    if (packageJson.version < git.tag_name) signale.note(`There are newer version available!\n${git.html_url}\n`);
     getUrl().then((url) => {
       getMac().then((mac) => {
         getToken(mac, url).then((data) => {

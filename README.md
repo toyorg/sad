@@ -1,4 +1,6 @@
-# An app to download videos from Stalker/Ministra Middleware
+# SAD - Stalker Archive Downloader
+
+#### Use this app to download or watch archived videos from Stalker/Ministra Middleware
 
 ## Requirements
 
@@ -8,19 +10,26 @@
 ## Usage
 
 ```console
+# Download latest pre-build release from here
+https://github.com/toyorg/sad/releases
+
+# OR
+
 # Clone or download zip
-git clone https://github.com/toyorg/stalker_archive_downloader.git
+git clone https://github.com/toyorg/sad.git
 # Open directory
-cd stalker_archive_downloader
+cd sad
 # Install dependencies
 npm i
-# First run to get channels
-node app.js -c
-# Then you can run app normally
+# Run app
 node app.js
 ```
 
 ## Changelog
+
+### v1.0.3
+
+* [Signale](https://github.com/klauscfhq/signale) replaced console.log.
 
 ### v1.0.2
 

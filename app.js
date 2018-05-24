@@ -98,6 +98,7 @@ const getLink = async (progId, token, mac, url) => {
           process.exit();
         } else if (answer.what === 'Link only') {
           signale.note(`${data.js.download_cmd}`);
+          require('child_process').spawnSync('read _ ', { shell: true, stdio: [0, 1, 2] });
         } else {
           signale.fatal(new Error('Something went wrong!'));
           process.exit();
@@ -292,7 +293,7 @@ const updateChecker = async () => {
 
 
 if (dbChannels.get('channels').size().value() === 0 || (process.argv.length > 1 && process.argv[2] === '-c')) {
-  signale.pending('Channels will be updated in one moment.\n');
+  signale.pending('Channels will be updated in one moment.');
   dbChannels.setState({ channels: [] });
   getUrl().then((url) => {
     getMac().then((mac) => {
@@ -308,7 +309,7 @@ if (dbChannels.get('channels').size().value() === 0 || (process.argv.length > 1 
   });
 } else {
   updateChecker().then((git) => {
-    if (packageJson.version < git.tag_name) signale.note(`There are newer version available!\n${git.html_url}\n`);
+    if (packageJson.version < git.tag_name) signale.note(`There are newer version available!\n${git.html_url}`);
     getUrl().then((url) => {
       getMac().then((mac) => {
         getToken(mac, url).then((data) => {
